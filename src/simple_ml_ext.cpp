@@ -35,7 +35,7 @@ void softmax_regression_epoch_cpp(const float *X, const unsigned char *y,
 
     /// BEGIN YOUR CODE
     int now_sample = 0;
-	auto Z = std::vector<float>(batch, std::vector<float>(k, 0.0));
+	auto Z = std::vector<std::vector<float>>(batch, std::vector<float>(k, 0.0));
 	
 	while (now_sample < m) {
 		if (now_sample + batch > m) {
@@ -54,9 +54,9 @@ void softmax_regression_epoch_cpp(const float *X, const unsigned char *y,
 			for (int j = 0 ; j < k ; ++j){
 				Z[i][j] = 0.0;
 				for (int o = 0 ; o < n ; ++o) {
-					Z[i][j] = sum += X[now_X_row*n + o] * theta[o*k+j]
+					Z[i][j] = X[now_X_row*n + o] * theta[o*k+j]
 				}
-				Z[i][j] = std::exp(Z[i][j])
+				Z[i][j] = std::exp(Z[i][j]);
 				z_row_sum += Z[i][j];
 			}
 			for (int j = 0 ; j < k ; ++j){
