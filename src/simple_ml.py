@@ -20,7 +20,7 @@ def add(x, y):
         Sum of x + y
     """
     ### BEGIN YOUR CODE
-    pass
+    return x+y
     ### END YOUR CODE
 
 
@@ -48,7 +48,23 @@ def parse_mnist(image_filename, label_filename):
                 for MNIST will contain the values 0-9.
     """
     ### BEGIN YOUR CODE
-    pass
+    with gzip.open(image_filename) as f:
+        magic_num = np.frombuffer(f.read(4), dtype=np.uint32).newbyteorder('>')[0]
+        num_images = np.frombuffer(f.read(4), dtype=np.uint32).newbyteorder('>')[0]
+        rows = np.frombuffer(f.read(4), dtype=np.uint32).newbyteorder('>')[0]
+        cols = np.frombuffer(f.read(4), dtype=np.uint32).newbyteorder('>')[0]
+        images = np.frombuffer(f.read(), dtype=np.uint8)
+        images = images.reshape(num_images, rows*cols)
+        images = images.astype(np.float32)
+        images /= 255.0
+
+    with gzip.open(label_filename) as f:
+        magic_num = np.frombuffer(f.read(4), dtype=np.uint32).newbyteorder('>')[0]
+        num_labels = np.frombuffer(f.read(4), dtype=np.uint32).newbyteorder('>')[0]
+        labels = np.frombuffer(f.read(), dtype=np.uint8)
+        labels = labels.reshape(num_labels)
+
+    return images, labels
     ### END YOUR CODE
 
 
@@ -68,7 +84,18 @@ def softmax_loss(Z, y):
         Average softmax loss over the sample.
     """
     ### BEGIN YOUR CODE
-    pass
+    exp_sum = np.sum( np.exp(Z), axis=1 )
+    log_exp_sum = np.log(exp_sum)
+    # print(f"log_exp_sum shape {log_exp_sum.shape}")
+    y_oh = np.eye(Z.shape[-1])[y.reshape(-1)]
+    # print(y_oh.shape)
+    zy = Z * y_oh
+    zy = np.sum(zy, axis=1)
+    ans = np.average(log_exp_sum - zy)
+    return ans
+
+
+
     ### END YOUR CODE
 
 
@@ -91,7 +118,20 @@ def softmax_regression_epoch(X, y, theta, lr = 0.1, batch=100):
         None
     """
     ### BEGIN YOUR CODE
-    pass
+    for i in range(0, X.shape[0], batch):
+        tX = X[i:i+batch]
+        ty = y[i:i+batch]
+        # print(tX.shape)
+        ey = np.eye(theta.shape[-1])[ty.reshape(-1)]
+        h_x = tX@theta
+        exp_hx = np.exp(h_x)
+        exp_sum = np.sum( exp_hx, axis=1 )
+        z = exp_hx / exp_sum.reshape(-1, 1)
+        # print(f"h_x shape {h_x.shape}, exp_hx shape {exp_hx.shape}, exp_sum shape {exp_sum.shape}, z.shape {z.shape}")
+        # print(tX.shape)
+        grad = tX.T @ (z - ey)
+        theta -= lr/batch * grad
+
     ### END YOUR CODE
 
 
@@ -118,7 +158,31 @@ def nn_epoch(X, y, W1, W2, lr = 0.1, batch=100):
         None
     """
     ### BEGIN YOUR CODE
-    pass
+    m = X.shape[0]
+    def relu(x):
+        return np.maximum(0, x)
+    def d_relu(x):
+        return (x > 0).astype(np.float32)
+    # w1 n*d
+    # w2 d*k
+    for i in range(0, m, batch):
+        tX = X[i:i+batch]
+        ty = y[i:i+batch]
+        # m*d
+        h1 = tX @ W1
+        z1 = relu(h1) # m * d
+        z2 = z1 @ W2
+        ey = np.eye(W2.shape[-1])[ty.reshape(-1)]
+        exp_z2 = np.exp(z2)
+        exp_sum = np.sum(exp_z2, axis=1)
+        S = exp_z2 / exp_sum.reshape(-1, 1)
+        g2 = S - ey # m*k
+        g1 = d_relu(z1) * (g2@W2.T)
+        dw1 = tX.T @ g1
+        dw2 = z1.T @ g2
+        W1 -= lr/ batch * dw1
+        W2 -= lr/ batch * dw2
+
     ### END YOUR CODE
 
 

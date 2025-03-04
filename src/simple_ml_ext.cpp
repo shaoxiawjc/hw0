@@ -2,6 +2,7 @@
 #include <pybind11/numpy.h>
 #include <cmath>
 #include <iostream>
+#include <vector>
 
 namespace py = pybind11;
 
@@ -33,7 +34,57 @@ void softmax_regression_epoch_cpp(const float *X, const unsigned char *y,
      */
 
     /// BEGIN YOUR CODE
-
+    int now_sample = 0;
+	auto Z = std::vector<float>(batch, std::vector<float>(k, 0.0));
+	
+	while (now_sample < m) {
+		if (now_sample + batch > m) {
+			// last batch process
+			batch = m - now_sample;
+		}
+		
+		// compute Z (after normalize)
+		// X@theta  m*n n*k
+		// i: row of X
+		// j: column of theta
+		// o: iteration of n
+		for (int i = 0 ; i < batch ; ++i){
+			int now_X_row = now_sample + i;
+			float z_row_sum = 0.0;
+			for (int j = 0 ; j < k ; ++j){
+				Z[i][j] = 0.0;
+				for (int o = 0 ; o < n ; ++o) {
+					Z[i][j] = sum += X[now_X_row*n + o] * theta[o*k+j]
+				}
+				Z[i][j] = std::exp(Z[i][j])
+				z_row_sum += Z[i][j];
+			}
+			for (int j = 0 ; j < k ; ++j){
+				Z[i][j] /= z_row_sum;
+			}
+		}
+		
+		// z = z - Iy
+		for (int i = 0 ; i < batch ; ++i){
+			Z[i][y[now_sample + i]] -= 1.0;
+		}
+		
+		// grad = tX.T @ z  n*m  @  m*k
+		for (int i = 0 ; i < n ; ++i) {
+			for (int j = 0 ; j < k ; ++j) {
+				float diff = 0.0;
+				for (int o = 0 ; o < batch ; ++o) {
+					// i: row of tx.T, column of tX
+					// o: column of tx.T, row of tX
+					diff += X[(now_sample + o) * n + i] * Z[o*k+j];
+				}
+				theta[i*k+j] -= lr* diff;
+			}
+		}
+		
+		now_sample += batch;
+	}
+	
     /// END YOUR CODE
 }
 

@@ -91,6 +91,7 @@ def test_softmax_regression_epoch():
     np.testing.assert_allclose(dTheta.reshape(5,3), Theta, rtol=1e-4, atol=1e-4)
 
 
+
     # test multi-steps on MNIST
     X,y = parse_mnist("data/train-images-idx3-ubyte.gz",
                       "data/train-labels-idx1-ubyte.gz")
